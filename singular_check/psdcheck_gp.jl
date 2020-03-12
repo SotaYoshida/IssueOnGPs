@@ -87,7 +87,7 @@ end
 function TFplot(Vs,inlog)
     plt=pyimport("matplotlib.pyplot")
     cm=pyimport("matplotlib.cm")
-    fig = figure(figsize=(12,4))
+    fig = figure(figsize=(12,3))
     axs = [fig.add_subplot(131),fig.add_subplot(132),fig.add_subplot(133)]
     for i=1:3
         axs[i].set_xlabel("\$ \\log_{10}\\tau \$ ") 
@@ -118,14 +118,16 @@ function TFplot(Vs,inlog)
     end
     if inlog
         savefig("TFplot_log.eps",bbox_inches="tight", pad_inches=0.1)
+        #savefig("TFplot_log.pdf",bbox_inches="tight", pad_inches=0.1)
     else
         savefig("TFplot.eps",bbox_inches="tight", pad_inches=0.1)
+        #savefig("TFplot.pdf",bbox_inches="tight", pad_inches=0.1)
     end
     plt.close()    
 end
 
-function difplot(difs,inlog)
-    tls= [ log10(i)+j for j=-5:1:6 for i=1:2:5 ]
+function difplot(difs,inlog,sigy)
+    tls= [ log10(i)+j for j=-5:1:5 for i=1:2:9 ]
     ln=length(tls)
     x = [ [ tls[i] for j=1:ln ] for i=1:ln]
     y = [ [ tls[i] for i=1:ln ] for j=1:ln]
@@ -138,7 +140,8 @@ function difplot(difs,inlog)
             for (i,raw) in enumerate(x)
                 for (j,tcol) in enumerate(raw)
                     if abs(log10(tau)-x[i][j])<1.e-5 && abs(log10(sigma)-y[i][j])<1.e-5
-                        zs[nth][i][j]=log10(mdif)
+                        zs[nth][i][j]=log10(mdif*sigy)
+                        #zs[nth][i][j]=mdif*sigy
                     end
                 end
             end
@@ -147,7 +150,7 @@ function difplot(difs,inlog)
     plt=pyimport("matplotlib.pyplot")
     cm=pyimport("matplotlib.cm")
     patches=pyimport("matplotlib.patches")
-    fig = figure(figsize=(9,3))
+    fig = figure(figsize=(10,3))
     axs = [fig.add_subplot(131),fig.add_subplot(132),fig.add_subplot(133)]
     for i =1:length(axs)
         axs[i].set_xlabel("\$ \\log_{10} \\tau \$")
@@ -168,18 +171,35 @@ function difplot(difs,inlog)
     else
         axs[1].set_title("RBF");axs[2].set_title("Mat52");axs[3].set_title("Mat32")
     end
-    tmax=4.0
-    ims = [axs[1].pcolormesh(x,y,zs[1],vmin=-8.0,vmax=tmax,cmap=plt.cm.jet,zorder=1000),
-           axs[2].pcolormesh(x,y,zs[2],vmin=-8.0,vmax=tmax,cmap=plt.cm.jet,zorder=1000),
-           axs[3].pcolormesh(x,y,zs[3],vmin=-8.0,vmax=tmax,cmap=plt.cm.jet,zorder=1000)]
+    #tmax=3.0
+    tmin = -10.0
+    tmax = 1.0
+    # ims = [axs[1].pcolormesh(x,y,zs[1],vmin=tmin,vmax=tmax,cmap=plt.cm.jet,zorder=1000),
+    #        axs[2].pcolormesh(x,y,zs[2],vmin=tmin,vmax=tmax,cmap=plt.cm.jet,zorder=1000),
+    #        axs[3].pcolormesh(x,y,zs[3],vmin=tmin,vmax=tmax,cmap=plt.cm.jet,zorder=1000)]
+
+    # ims = [axs[1].pcolormesh(x,y,zs[1],vmin=tmin,vmax=tmax,cmap=plt.cm.viridis,zorder=1000),
+    #       axs[2].pcolormesh(x,y,zs[2],vmin=tmin,vmax=tmax,cmap=plt.cm.viridis,zorder=1000),
+    #       axs[3].pcolormesh(x,y,zs[3],vmin=tmin,vmax=tmax,cmap=plt.cm.viridis,zorder=1000)]
+
+    ims = [axs[1].pcolormesh(x,y,zs[1],vmin=tmin,cmap=plt.cm.plasma,zorder=1000),
+           axs[2].pcolormesh(x,y,zs[2],vmin=tmin,cmap=plt.cm.plasma,zorder=1000),
+           axs[3].pcolormesh(x,y,zs[3],vmin=tmin,cmap=plt.cm.plasma,zorder=1000)]
+
+    # ims = [axs[1].pcolormesh(x,y,zs[1],vmin=tmin,vmax=tmax,cmap=plt.cm.plasma,zorder=1000),
+    #        axs[2].pcolormesh(x,y,zs[2],vmin=tmin,vmax=tmax,cmap=plt.cm.plasma,zorder=1000),
+    #        axs[3].pcolormesh(x,y,zs[3],vmin=tmin,vmax=tmax,cmap=plt.cm.plasma,zorder=1000)]
+
     fig.colorbar(ims[1], ax=axs[1])
     fig.colorbar(ims[2], ax=axs[2])
     fig.colorbar(ims[3], ax=axs[3])
     fig.tight_layout()
     if inlog
         savefig("dif_log.eps",bbox_inches="tight")
+        #savefig("dif_log.pdf",bbox_inches="tight")
     else
         savefig("dif.eps",bbox_inches="tight")
+        #savefig("dif.pdf",bbox_inches="tight")
     end
     plt.close()
 end
@@ -195,6 +215,7 @@ function main()
     meany = mean(oyt)
     muy=0*oyt #.+ meany
     sigy=std(oyt)
+    println("sigy $sigy")
     yt =(oyt - muy)/sigy
     xp = collect(16.0:2.0:20.0)
 
@@ -205,8 +226,8 @@ function main()
     inlog=false
     inlog=true
 
-    taus   = [ i * 10.0^j for j=-5:1:5 for i=1:1:5]
-    sigmas = [ i * 10.0^j for j=-5:1:5 for i=1:1:5]
+    taus   = [ i * 10.0^j for j=-5:1:5 for i=1:2:9]
+    sigmas = [ i * 10.0^j for j=-5:1:5 for i=1:2:9]
 
     for inlog in [true,false]
 
@@ -227,7 +248,6 @@ function main()
                 #println("######\ntau=$tau, sigma=$sigma \n########")
                 Ktt_3,Kpt_3,Kpp_3,Ktt_M,Kpt_M,Kpp_M,Ktt_R,Kpt_R,Kpp_R=KernelMat(tau,sigma,xt,xp,inlog)
                 
-                println("*Results with own code")            
                 try 
                     cLinv3,llh3= Mchole(Ktt_3,lt)
                     muj3,Sj3 = calcSj(cLinv3,Ktt_3,Kpt_3,Kpp_3,yt,muy,muyp)
@@ -254,7 +274,7 @@ function main()
                 catch
                     PSD_R = 3.0
                 end
-                println("PSD check...... Mat32:", PSD_3," Mat52:",PSD_M,"  RBF:",PSD_R,"\n")
+                println("PSD check...... Mat32:", PSD_3," Mat52:",PSD_M,"  RBF:",PSD_R)
                 
                 ### GaussianProcesses.jl
                 logObsNoise = -1.e+305
@@ -291,7 +311,7 @@ function main()
         end
         TFplot(Vs,inlog)
         difs=[difs_R,difs_M,difs_M3]
-        difplot(difs,inlog)
+        difplot(difs,inlog,sigy)
     end
 end
 
